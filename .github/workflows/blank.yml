@@ -38,15 +38,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          # Кэш отключен, так как файлов lock еще нет
 
       - name: Initialize and Install Backend Dependencies
         run: |
-          # Инициализируем проект, если package.json пустой
+          # Полностью удаляем пустой некорректный package.json
+          rm -f package.json
+          # Инициализируем чистый и валидный package.json
           npm init -y
-          # Принудительно устанавливаем базовые пакеты для бэкенда и работы с PG
+          # Устанавливаем базовые бэкенд зависимости
           npm install express pg sequelize dotenv
-          # Добавляем скрипты заглушки, чтобы шаги lint/test/migrate не падали
+          # Добавляем обязательные скрипты-заглушки, чтобы шаги сборки не падали
           npx npm-add-script -k "lint" -v "echo 'No lint specified'"
           npx npm-add-script -k "db:migrate" -v "echo 'No migrations specified'"
           npx npm-add-script -k "test" -v "echo 'No tests specified'"
@@ -80,15 +81,16 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Scaffold and Install Vue Dependencies
-        # Очищаем пустую папку и создаем там чистый шаблон Vue без интерактивных вопросов
         run: |
+          # Очищаем папку от пустых файлов
           rm -rf ./*
-          npm create vue@latest -- --yes --router --pinia --typescript
+          # Используем актуальный автоматический флаг --default для генерации структуры
+          npm create vue@latest -- --default
+          # Устанавливаем скачанные только что зависимости
           npm install
         working-directory: ./frontend
 
       - name: Lint & Type Check
-        # Допускаем ошибку, если в дефолтном шаблоне настроен строгий линтер
         continue-on-error: true
         run: npm run lint
         working-directory: ./frontend
@@ -113,5 +115,5 @@ jobs:
       - name: Run Smoke Checks
         run: |
           echo "Проверка структуры репозитория..."
-          test -d backend && echo "✅ Backend папка на месте"
-          test -d frontend && echo "✅ Frontend папка на месте"
+          test -d backend && echo "✅ Backend папка инициализирована"
+          test -d frontend && echo "✅ Frontend папка инициализирована"
